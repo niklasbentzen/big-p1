@@ -1,11 +1,11 @@
 import scala.collection.mutable
 
-class Node(val id: Int) {
+class Server(val id: Int) {
   private val data = mutable.Map[String, String]()
 
   def put(key: String, value: String): Unit = {
     data(key) = value
-    println(s"Node $id stored: ($key -> $value)")
+    println(s"Server $id stored: ($key -> $value)")
   }
 
   def get(key: String): Option[String] =
@@ -15,5 +15,5 @@ class Node(val id: Int) {
     data.remove(key)
 
   def displayData(): Unit =
-    println(s"Node $id Data: $data")
+    println(s"Server $id Data: $data")
 }

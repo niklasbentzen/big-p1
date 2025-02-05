@@ -1,0 +1,3 @@
+class File(id: Int) {
+
+}
