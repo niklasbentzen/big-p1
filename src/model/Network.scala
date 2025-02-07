@@ -13,14 +13,33 @@ class Network(val ringSize: Int) {
     val newServer = new Server(serverId, ringSize)
     servers(serverId) = newServer
 
-    // updateSuccessorPredecessor()
+    updateSuccessorPredecessor()
 
     println(s"Server $serverId added to the network.")
     newServer
   }
 
+  /** Find a server by ID */
   def findServer(serverId: Int): Option[Server] = servers.get(serverId)
 
+  /** Update successor & predecessor for all servers */
+  private def updateSuccessorPredecessor(): Unit = {
+    val serverIds = servers.keys.toSeq.sorted
+    if (serverIds.isEmpty) return
+
+    for (i <- serverIds.indices) {
+      val current = servers(serverIds(i))
+      val successor = servers.get(serverIds((i + 1) % serverIds.length))
+      val predecessor = servers.get(serverIds((i - 1 + serverIds.length) % serverIds.length))
+
+      current.successor = successor
+      current.predecessor = predecessor
+
+      println(s"Server ${current.id} -> Successor: ${successor.map(_.id).getOrElse("None")}, Predecessor: ${predecessor.map(_.id).getOrElse("None")}")
+    }
+  }
+
+  /** Display network state */
   def displayNetwork(): Unit = {
     println("\nCurrent Network State:")
     servers.values.foreach { server =>

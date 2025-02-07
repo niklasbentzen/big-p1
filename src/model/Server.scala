@@ -18,12 +18,12 @@ class Server(val id: Int, ringSize: Int) {
     }
   }
 
-  def isResponsibleForKey(key: Int): Boolean = {
+  private def isResponsibleForKey(key: Int): Boolean = {
     val predId = predecessor.map(_.id).getOrElse(id - 1)
     (key > predId && key <= id) || (predId > id && (key > predId || key <= id))
   }
 
-  def routeToSuccessor(key: Int, file: File): Unit = {
+  private def routeToSuccessor(key: Int, file: File): Unit = {
     findSuccessor(key).put(file)
   }
 
@@ -35,7 +35,15 @@ class Server(val id: Int, ringSize: Int) {
 
   }
 
-  def get(key: Int): Option[File] = data.get(key: Int)
+  def get(key: Int): Option[File] = {
+    if (isResponsibleForKey(key)) {
+      data.get(key: Int)
+    } else {
+      println("Didn't find key here, looking at next server...")
+      findSuccessor(key).get(key)
+    }
+
+  }
 
   def remove(key: Int): Unit = data.remove(key: Int)
 

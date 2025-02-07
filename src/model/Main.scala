@@ -12,8 +12,9 @@ object Main {
       case Some(server) => server.put(File(3, "hello"))
     }
 
-    n.removeServer(1)
-
+    n.findServer(1) match {
+      case Some(server) => println(server.get(3))
+    }
 
 
 
