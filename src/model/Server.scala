@@ -32,7 +32,6 @@ class Server(val id: Int, ringSize: Int) {
     else fingerTable.find { case (_, server) => server.id >= key }.map(_._2)
       .orElse(successor)
       .getOrElse(this)
-
   }
 
   def get(key: Int): Option[File] = {
@@ -42,12 +41,18 @@ class Server(val id: Int, ringSize: Int) {
       println("Didn't find key here, looking at next server...")
       findSuccessor(key).get(key)
     }
-
   }
 
   def remove(key: Int): Unit = data.remove(key: Int)
 
   def displayData(): Unit = println(s"Server $id Data: $data")
+
+  def displayFingerTable(): Unit = {
+    println(s"Finger table for server $id:")
+    fingerTable.foreach { case (index, server) =>
+      println(s"Index $index -> Server ${server.id}")
+    }
+  }
 
   private def hash(value: Int): Int = {
     value % ringSize

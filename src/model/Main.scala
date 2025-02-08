@@ -12,10 +12,12 @@ object Main {
       case Some(server) => server.put(File(3, "hello"))
     }
 
-    n.findServer(1) match {
-      case Some(server) => println(server.get(3))
+    n.findServer(5) match {
+      case Some(server) => {
+        println(server.get(3))
+        server.displayFingerTable()
+      }
     }
-
 
 
   }
