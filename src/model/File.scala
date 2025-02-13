@@ -1,3 +1,3 @@
 package model
 
-case class File(id: Int, value: String)
+case class File(key: BigInt, value: String)
