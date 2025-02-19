@@ -9,14 +9,14 @@ object Simulation {
   val ringSize: BigInt = BigInt(2).pow(m)
 
   def main(args: Array[String]): Unit = {
-    val nodes = 5
+    val nodes = 100
     val extents = 10000
     val replicationFactor = 3
     // val workload = 100000
 
+    for (i <- 1 to 5) {
+
     val network = new Network(m, replicationFactor)
-
-
 
     // Create initial nodes
     (1 to nodes).foreach { i =>
@@ -30,6 +30,8 @@ object Simulation {
     for (node <- network.nodes) {
       println(s"${node._2.data.size}")
     }
+    println()
+  }
   }
 
   private def dataToRandomNode(extents: Int, network: Network): Unit = {

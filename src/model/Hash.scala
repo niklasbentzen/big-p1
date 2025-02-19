@@ -3,7 +3,7 @@ package model
 import java.security.MessageDigest
 
 object Hash {
-  val method = 256
+  val method = 1
 
   def hash(key: String, ringSize: BigInt): BigInt = {
     method match {
