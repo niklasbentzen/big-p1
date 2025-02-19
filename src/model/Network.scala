@@ -2,7 +2,7 @@ package model
 
 import scala.collection.mutable
 
-class Network(val m: Int) {
+class Network(val m: Int, val replicationFactor: Int) {
   val ringSize: BigInt = BigInt(2).pow(m)
   val nodes: mutable.TreeMap[String, Node] = mutable.TreeMap()
 
@@ -12,12 +12,12 @@ class Network(val m: Int) {
       throw new RuntimeException(s"Server $nodeId already exists!")
     }
 
-    val newServer = new Node(nodeId, ringSize)
-    val existingServer = nodes.headOption.map(_._2) // Pick any existing server for reference
-    newServer.join(existingServer)
+    val newNode = new Node(nodeId, ringSize, replicationFactor)
+    val maybeNode = nodes.headOption.map(_._2) // Pick any existing server for reference
+    newNode.join(maybeNode)
 
-    nodes(nodeId) = newServer
-    newServer
+    nodes(nodeId) = newNode
+    newNode
   }
 
   /** Display the Chord network state */

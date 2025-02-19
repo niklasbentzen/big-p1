@@ -2,7 +2,7 @@ package model
 
 import scala.collection.mutable
 
-class Node(val identifier: String, val ringSize: BigInt) {
+class Node(val identifier: String, val ringSize: BigInt, replicationFactor: Int) {
   val id: BigInt = Hash.hash(identifier, ringSize)
 
   var successor: Option[Node] = None
@@ -16,6 +16,13 @@ class Node(val identifier: String, val ringSize: BigInt) {
       data(key) = value
     } else {
       routeToSuccessor(key, value)
+    }
+
+    // Replication
+    var node = findSuccessor(key)
+    for (_ <- 1 to replicationFactor) {
+      node.data(key) = value
+      node = node.successor.getOrElse(node)
     }
   }
 
