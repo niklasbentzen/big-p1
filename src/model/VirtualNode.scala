@@ -2,13 +2,10 @@ package model
 
 import scala.collection.mutable
 
-class Node(val identifier: String, val ringSize: BigInt, replicationFactor: Int) {
-  val id: BigInt = Hash.hash(identifier, ringSize)
-
-  var successor: Option[Node] = None
-  var predecessor: Option[Node] = None
-  private val fingerTable: mutable.Map[Int, Node] = mutable.Map()
-
+class VirtualNode(val physicalNode: PhysicalNode, val vnodeId: BigInt, val ringSize: BigInt, replicationFactor: Int) {
+  var successor: Option[VirtualNode] = None
+  var predecessor: Option[VirtualNode] = None
+  private val fingerTable: mutable.Map[Int, VirtualNode] = mutable.Map()
   val data: mutable.Map[BigInt, String] = mutable.Map()
 
   def put(key: BigInt, value: String): Unit = {
@@ -18,7 +15,7 @@ class Node(val identifier: String, val ringSize: BigInt, replicationFactor: Int)
       routeToSuccessor(key, value)
     }
 
-    // Replication
+    // Replication across `replicationFactor` successors
     var node = findSuccessor(key)
     for (_ <- 1 to replicationFactor) {
       node.data(key) = value
@@ -33,62 +30,57 @@ class Node(val identifier: String, val ringSize: BigInt, replicationFactor: Int)
   }
 
   private def isResponsibleForKey(key: BigInt): Boolean = {
-    val predId = predecessor.map(_.id).getOrElse(id - 1)
-    (key > predId && key <= id) || (predId > id && (key > predId || key <= id))
+    val predId = predecessor.map(_.vnodeId).getOrElse(vnodeId - 1)
+    (key > predId && key <= vnodeId) || (predId > vnodeId && (key > predId || key <= vnodeId))
   }
 
   private def routeToSuccessor(key: BigInt, value: String): Unit = {
     findSuccessor(key).put(key, value)
   }
 
-  def join(existingNode: Option[Node]): Unit = {
+  def join(existingNode: Option[VirtualNode]): Unit = {
     existingNode match {
       case None =>
         successor = Some(this)
         predecessor = Some(this)
-        //println(s"Server $id initialized as the first server in the Chord ring.")
 
       case Some(server) =>
-        val newSuccessor = server.findSuccessor(this.id)
+        val newSuccessor = server.findSuccessor(this.vnodeId)
         this.successor = Some(newSuccessor)
         this.predecessor = newSuccessor.predecessor
 
-        // Update existing node links
         newSuccessor.predecessor = Some(this)
         this.predecessor.foreach(_.successor = Some(this))
 
-        // Take over some data from the successor
         migrateData(newSuccessor)
-
-        //println(s"Node $id joined Chord ring. Successor: ${successor}, Predecessor: ${this.predecessor.map(_.id)}")
     }
   }
 
-  private def findSuccessor(id: BigInt): Node = {
+  private def findSuccessor(id: BigInt): VirtualNode = {
     if (this.successor.isEmpty || this.successor.get == this) {
       return this
     }
-    if ((this.id < id && id <= this.successor.get.id) ||
-      (this.id > this.successor.get.id && (id > this.id || id <= this.successor.get.id))) {
+    if ((this.vnodeId < id && id <= this.successor.get.vnodeId) ||
+      (this.vnodeId > this.successor.get.vnodeId && (id > this.vnodeId || id <= this.successor.get.vnodeId))) {
       return this.successor.get
     }
     return this.successor.get.findSuccessor(id)
   }
 
-  private def migrateData(fromNode: Node): Unit = {
-    val keysToTake = fromNode.data.keys.filter(key => key <= this.id)
+  private def migrateData(fromNode: VirtualNode): Unit = {
+    val keysToTake = fromNode.data.keys.filter(key => key <= this.vnodeId)
     keysToTake.foreach { key =>
       this.data(key) = fromNode.data(key)
       fromNode.data.remove(key)
     }
   }
 
-  def displayData(): Unit = println(s"Server $id Data: $data")
+  def displayData(): Unit = println(s"VNode $vnodeId Data: $data")
 
   def displayFingerTable(): Unit = {
-    println(s"Finger table for server $id:")
+    println(s"Finger table for vnode $vnodeId:")
     fingerTable.foreach { case (index, server) =>
-      println(s"Index $index -> Server ${server.id}")
+      println(s"Index $index -> VNode ${server.vnodeId}")
     }
   }
 }

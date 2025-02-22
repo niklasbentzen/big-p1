@@ -1,46 +1,42 @@
 package simulation
 
 import model._
+
 import scala.util.Random
 import java.util.UUID.randomUUID
+import scala.collection.mutable
 
 object Simulation {
   val m = 120
   val ringSize: BigInt = BigInt(2).pow(m)
 
   def main(args: Array[String]): Unit = {
-    val nodes = 5
+    val nodes = 100
     val extents = 10000
     val replicationFactor = 3
+    val vnodesPerPhysicalNode = 10
     // val workload = 100000
 
-    val network = new Network(m, replicationFactor)
-
-
+    val network = new Network(m, replicationFactor, vnodesPerPhysicalNode)
 
     // Create initial nodes
     (1 to nodes).foreach { i =>
       val key = Hash.hash(randomUUID().toString, ringSize).toString()
-      network.addNode(key)
+      network.addPhysicalNode(key)
     }
 
-    dataToRandomNode(extents, network)
+    dataToFirstNode(extents, network)
 
-    // Print load distribution
-    for (node <- network.nodes) {
-      println(s"${node._2.data.size}")
+    val physicalDataCount = mutable.Map[PhysicalNode, Int]().withDefaultValue(0)
+
+    // Count data from each virtual node and sum it per physical node
+    for ((_, vnode) <- network.virtualNodes) {
+      physicalDataCount(vnode.physicalNode) += vnode.data.size
     }
-  }
 
-  private def dataToRandomNode(extents: Int, network: Network): Unit = {
-    // Assign data to random node
-    for (_ <- 0 until extents) {
-      val filename = randomFileName()
-      val key = Hash.hash(filename, ringSize)
-
-      // Pick a random node from the network
-      val randomNode = network.nodes.toSeq(Random.nextInt(network.nodes.size))._2
-      randomNode.put(key, filename)
+    // Print the data distribution
+    for ((pNode, totalData) <- physicalDataCount) {
+      println(s"$totalData")
     }
   }
 
@@ -49,7 +45,7 @@ object Simulation {
     for (i <- 0 until extents) {
       val filename = randomFileName()
       val key = Hash.hash(filename, ringSize)
-      network.nodes.head._2.put(key, filename)
+      network.virtualNodes.head._2.put(key, filename)
     }
   }
 
